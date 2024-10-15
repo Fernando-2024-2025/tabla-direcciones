@@ -22,11 +22,33 @@
         th {
             background-color: #f2f2f2;
         }
+        input, select {
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
 
 <h1>Tabla de Direcciones</h1>
+
+<!-- Filtros y Buscador -->
+<label for="provinciaFilter">Filtrar por Provincia:</label>
+<select id="provinciaFilter" onchange="filterTable()">
+    <option value="">Todos</option>
+</select>
+
+<label for="localidadFilter">Filtrar por Localidad:</label>
+<select id="localidadFilter" onchange="filterTable()">
+    <option value="">Todos</option>
+</select>
+
+<label for="codigoPostalFilter">Filtrar por Código Postal:</label>
+<select id="codigoPostalFilter" onchange="filterTable()">
+    <option value="">Todos</option>
+</select>
+
+<label for="searchInput">Buscar por Dirección:</label>
+<input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Buscar...">
 
 <table id="dataTable">
     <thead>
@@ -44,6 +66,7 @@
 
 <script>
     const CSV_URL = 'https://drive.google.com/uc?export=download&id=15pc9U742OeInFmKAEjoao4h9_67I2-tf';
+    let tableData = [];
 
     function loadCSV() {
         fetch(CSV_URL)
@@ -53,16 +76,76 @@
             })
             .then(data => {
                 const rows = data.split('\n').map(row => row.split(','));
-                const tableBody = document.querySelector('#dataTable tbody');
-                rows.slice(1).forEach(row => { // Omitir la cabecera
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
-                    tableBody.appendChild(tr);
-                });
+                tableData = rows.slice(1); // Omitir la cabecera
+                populateTable(tableData);
+                populateFilters(tableData);
             })
             .catch(error => {
                 console.error('Error al cargar el CSV: ', error);
             });
+    }
+
+    function populateTable(data) {
+        const tableBody = document.querySelector('#dataTable tbody');
+        tableBody.innerHTML = ''; // Limpiar tabla antes de llenarla
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
+            tableBody.appendChild(tr);
+        });
+    }
+
+    function populateFilters(data) {
+        const provincias = new Set();
+        const localidades = new Set();
+        const codigosPostales = new Set();
+        
+        data.forEach(row => {
+            provincias.add(row[0]);
+            localidades.add(row[1]);
+            codigosPostales.add(row[2]);
+        });
+
+        const provinciaSelect = document.getElementById('provinciaFilter');
+        provincias.forEach(provincia => {
+            const option = document.createElement('option');
+            option.value = provincia;
+            option.textContent = provincia;
+            provinciaSelect.appendChild(option);
+        });
+
+        const localidadSelect = document.getElementById('localidadFilter');
+        localidades.forEach(localidad => {
+            const option = document.createElement('option');
+            option.value = localidad;
+            option.textContent = localidad;
+            localidadSelect.appendChild(option);
+        });
+
+        const codigoPostalSelect = document.getElementById('codigoPostalFilter');
+        codigosPostales.forEach(codigo => {
+            const option = document.createElement('option');
+            option.value = codigo;
+            option.textContent = codigo;
+            codigoPostalSelect.appendChild(option);
+        });
+    }
+
+    function filterTable() {
+        const provinciaFilter = document.getElementById('provinciaFilter').value;
+        const localidadFilter = document.getElementById('localidadFilter').value;
+        const codigoPostalFilter = document.getElementById('codigoPostalFilter').value;
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+        const filteredData = tableData.filter(row => {
+            const matchesProvincia = !provinciaFilter || row[0] === provinciaFilter;
+            const matchesLocalidad = !localidadFilter || row[1] === localidadFilter;
+            const matchesCodigoPostal = !codigoPostalFilter || row[2] === codigoPostalFilter;
+            const matchesSearch = row[3].toLowerCase().includes(searchInput);
+            return matchesProvincia && matchesLocalidad && matchesCodigoPostal && matchesSearch;
+        });
+
+        populateTable(filteredData);
     }
 
     window.onload = loadCSV;
