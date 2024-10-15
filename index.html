@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla de Direcciones con Google Sheets API</title>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <title>Tabla de Direcciones desde CSV</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -44,42 +43,29 @@
 </table>
 
 <script>
-    const SHEET_ID = '1YKCGLfdlNvcwAynIGf97CubRDbwZqCsdom5VK3y_LTY'; // ID de tu hoja
-    const API_KEY = 'AIzaSyCyE4ZaUMuyQrMzd3WZhAZdVLjQdESaA3s'; // Tu clave API
+    const CSV_URL = 'https://drive.google.com/uc?export=download&id=15pc9U742OeInFmKAEjoao4h9_67I2-tf';
 
-    function init() {
-        gapi.load('client', () => {
-            gapi.client.init({
-                apiKey: API_KEY,
-                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
-            }).then(() => {
-                loadData();
-            });
-        });
-    }
-
-    function loadData() {
-        gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SHEET_ID,
-            range: 'Huella_Compacta' // Asegúrate de que el nombre sea correcto
-        }).then(response => {
-            const rows = response.result.values;
-            if (rows.length) {
+    function loadCSV() {
+        fetch(CSV_URL)
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.text();
+            })
+            .then(data => {
+                const rows = data.split('\n').map(row => row.split(','));
                 const tableBody = document.querySelector('#dataTable tbody');
                 rows.slice(1).forEach(row => { // Omitir la cabecera
                     const tr = document.createElement('tr');
                     tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
                     tableBody.appendChild(tr);
                 });
-            } else {
-                console.log('No data found.');
-            }
-        }, error => {
-            console.error('Error loading data: ', error);
-        });
+            })
+            .catch(error => {
+                console.error('Error al cargar el CSV: ', error);
+            });
     }
 
-    window.onload = init;
+    window.onload = loadCSV;
 </script>
 
 </body>
