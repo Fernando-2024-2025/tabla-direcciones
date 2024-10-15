@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla de Direcciones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .filter {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Tabla de Direcciones</h1>
+
+<div class="filter">
+    <label for="provincia">Provincia:</label>
+    <select id="provincia" onchange="filterTable()">
+        <option value="">Todas</option>
+    </select>
+
+    <label for="localidad">Localidad:</label>
+    <select id="localidad" onchange="filterTable()">
+        <option value="">Todas</option>
+    </select>
+
+    <label for="codigoPostal">Código Postal:</label>
+    <select id="codigoPostal" onchange="filterTable()">
+        <option value="">Todos</option>
+    </select>
+
+    <input type="text" id="direccionSearch" onkeyup="filterTable()" placeholder="Buscar por dirección...">
+</div>
+
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>Provincia</th>
+            <th>Localidad</th>
+            <th>Código Postal</th>
+            <th>Dirección</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Los datos se cargarán aquí -->
+    </tbody>
+</table>
+
+<script>
+    const fileUrls = [
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_1.txt',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_2.txt',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_3.txt',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_4.txt',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_5.txt'
+    ]; // URLs de los archivos TXT
+
+    let allData = [];
+
+    Promise.all(fileUrls.map(url => fetch(url).then(response => response.text())))
+        .then(fileContents => {
+            fileContents.forEach(data => {
+                const rows = data.split('\n');
+                rows.forEach(row => {
+                    const cols = row.split(',');
+                    if (cols.length === 4) {
+                        allData.push(cols.map(col => col.trim()));
+                    }
+                });
+            });
+
+            loadTable(allData.slice(0, 25)); // Mostrar solo las primeras 25 filas
+        })
+        .catch(error => {
+            console.error(error);
+            alert('No se pudo cargar los archivos. Verifica los enlaces y los permisos.');
+        });
+
+    function loadTable(data) {
+        const tableBody = document.querySelector('#dataTable tbody');
+        const provincias = new Set();
+        const localidades = new Set();
+        const codigosPostales = new Set();
+
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
+            tableBody.appendChild(tr);
+
+            provincias.add(row[0]);
+            localidades.add(row[1]);
+            codigosPostales.add(row[2]);
+        });
+
+        populateSelect('provincia', provincias);
+        populateSelect('localidad', localidades);
+        populateSelect('codigoPostal', codigosPostales);
+    }
+
+    function populateSelect(selectId, options) {
+        const select = document.getElementById(selectId);
+        options.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.innerHTML = option;
+            select.appendChild(opt);
+        });
+    }
+
+    function filterTable() {
+        const provinciaFilter = document.getElementById('provincia').value;
+        const localidadFilter = document.getElementById('localidad').value;
+        const codigoPostalFilter = document.getElementById('codigoPostal').value;
+        const direccionFilter = document.getElementById('direccionSearch').value.toLowerCase();
+        const rows = document.querySelectorAll('#dataTable tbody tr');
+
+        rows.forEach(row => {
+            const cells = row.getElementsByTagName('td');
+            const provincia = cells[0].textContent;
+            const localidad = cells[1].textContent;
+            const codigoPostal = cells[2].textContent;
+            const direccion = cells[3].textContent.toLowerCase();
+
+            const provinciaMatch = provinciaFilter === '' || provincia === provinciaFilter;
+            const localidadMatch = localidadFilter === '' || localidad === localidadFilter;
+            const codigoPostalMatch = codigoPostalFilter === '' || codigoPostal === codigoPostalFilter;
+            const direccionMatch = direccion.includes(direccionFilter);
+
+            row.style.display = provinciaMatch && localidadMatch && codigoPostalMatch && direccionMatch ? '' : 'none';
+        });
+    }
+</script>
+
+</body>
+</html>
