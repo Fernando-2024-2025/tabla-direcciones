@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla de Direcciones desde CSV</title>
+    <title>Tabla de Direcciones desde Google Sheets</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,7 +29,7 @@
 </head>
 <body>
 
-<h1>Tabla de Direcciones</h1>
+<h1>Tabla de Direcciones desde Google Sheets</h1>
 
 <!-- Filtros y Buscador -->
 <label for="provinciaFilter">Filtrar por Provincia:</label>
@@ -65,29 +65,29 @@
 </table>
 
 <script>
-    const CSV_URL = 'https://drive.google.com/uc?export=download&id=15pc9U742OeInFmKAEjoao4h9_67I2-tf';
+    const API_KEY = 'AIzaSyCyE4ZaUMuyQrMzd3WZhAZdVLjQdESaA3s';
+    const SPREADSHEET_ID = '16NybjNATTkTz3en5_OvqlgGDy83ff7iQJYJ6MgVaDN0';
+    const RANGE = 'Tabla_1!A:D'; // Rango que contiene los datos (Provincia, Localidad, Código Postal, Dirección)
     let tableData = [];
 
-    function loadCSV() {
-        fetch(CSV_URL)
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.text();
-            })
+    function loadSheetData() {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+        
+        fetch(url)
+            .then(response => response.json())
             .then(data => {
-                const rows = data.split('\n').map(row => row.split(','));
-                tableData = rows.slice(1); // Omitir la cabecera
+                tableData = data.values.slice(1); // Omitir la primera fila (cabecera)
                 populateTable(tableData);
                 populateFilters(tableData);
             })
             .catch(error => {
-                console.error('Error al cargar el CSV: ', error);
+                console.error('Error al cargar los datos de Google Sheets:', error);
             });
     }
 
     function populateTable(data) {
         const tableBody = document.querySelector('#dataTable tbody');
-        tableBody.innerHTML = ''; // Limpiar tabla antes de llenarla
+        tableBody.innerHTML = ''; // Limpiar la tabla antes de llenarla
         data.forEach(row => {
             const tr = document.createElement('tr');
             tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
@@ -148,7 +148,7 @@
         populateTable(filteredData);
     }
 
-    window.onload = loadCSV;
+    window.onload = loadSheetData;
 </script>
 
 </body>
