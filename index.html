@@ -65,18 +65,15 @@
 </table>
 
 <script>
-    const csvUrls = [
-        'https://drive.google.com/uc?export=download&id=15pc9U742OeInFmKAEjoao4h9_67I2-tf', // Enlace de tu archivo CSV
-    ];
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/1YKCGLfdlNvcwAynIGf97CubRDbwZqCsdom5VK3y_LTY/export?format=csv';
 
-    Promise.all(csvUrls.map(url => fetch(url).then(response => response.text())))
-        .then(dataArrays => {
-            const allData = dataArrays.flatMap(data => {
-                const rows = data.split('\n').slice(1); // Omite la cabecera
-                return rows.map(row => {
-                    const [provincia, localidad, codigoPostal, direccion] = row.split(',');
-                    return { Provincia: provincia, Localidad: localidad, "Código Postal": codigoPostal, Dirección: direccion };
-                });
+    fetch(csvUrl)
+        .then(response => response.text())
+        .then(data => {
+            const rows = data.split('\n').slice(1); // Omite la cabecera
+            const allData = rows.map(row => {
+                const [provincia, localidad, codigoPostal, direccion] = row.split(',');
+                return { Provincia: provincia, Localidad: localidad, "Código Postal": codigoPostal, Dirección: direccion };
             });
             loadTable(allData.slice(0, 25)); // Mostrar solo las primeras 25 filas
         })
