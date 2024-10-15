@@ -66,9 +66,7 @@
 
 <script>
     const csvUrls = [
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_1.csv',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_2.csv',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_3.csv',
+        'https://drive.google.com/uc?export=download&id=15pc9U742OeInFmKAEjoao4h9_67I2-tf', // Enlace de tu archivo CSV
     ];
 
     Promise.all(csvUrls.map(url => fetch(url).then(response => response.text())))
