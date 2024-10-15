@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabla de Direcciones</title>
+    <title>Tabla de Direcciones con Google Sheets API</title>
+    <script src="https://apis.google.com/js/api.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,33 +23,11 @@
         th {
             background-color: #f2f2f2;
         }
-        .filter {
-            margin: 10px 0;
-        }
     </style>
 </head>
 <body>
 
 <h1>Tabla de Direcciones</h1>
-
-<div class="filter">
-    <label for="provincia">Provincia:</label>
-    <select id="provincia" onchange="filterTable()">
-        <option value="">Todas</option>
-    </select>
-
-    <label for="localidad">Localidad:</label>
-    <select id="localidad" onchange="filterTable()">
-        <option value="">Todas</option>
-    </select>
-
-    <label for="codigoPostal">Código Postal:</label>
-    <select id="codigoPostal" onchange="filterTable()">
-        <option value="">Todos</option>
-    </select>
-
-    <input type="text" id="direccionSearch" onkeyup="filterTable()" placeholder="Buscar por dirección...">
-</div>
 
 <table id="dataTable">
     <thead>
@@ -65,76 +44,42 @@
 </table>
 
 <script>
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/1YKCGLfdlNvcwAynIGf97CubRDbwZqCsdom5VK3y_LTY/export?format=csv';
+    const SHEET_ID = '1YKCGLfdlNvcwAynIGf97CubRDbwZqCsdom5VK3y_LTY'; // ID de tu hoja
+    const API_KEY = 'AIzaSyCyE4ZaUMuyQrMzd3WZhAZdVLjQdESaA3s'; // Tu clave API
 
-    fetch(csvUrl)
-        .then(response => response.text())
-        .then(data => {
-            const rows = data.split('\n').slice(1); // Omite la cabecera
-            const allData = rows.map(row => {
-                const [provincia, localidad, codigoPostal, direccion] = row.split(',');
-                return { Provincia: provincia, Localidad: localidad, "Código Postal": codigoPostal, Dirección: direccion };
+    function init() {
+        gapi.load('client', () => {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"]
+            }).then(() => {
+                loadData();
             });
-            loadTable(allData.slice(0, 25)); // Mostrar solo las primeras 25 filas
-        })
-        .catch(error => {
-            console.error(error);
-            alert('No se pudo cargar los datos. Verifica el enlace y los permisos.');
-        });
-
-    function loadTable(data) {
-        const tableBody = document.querySelector('#dataTable tbody');
-        const provincias = new Set();
-        const localidades = new Set();
-        const codigosPostales = new Set();
-
-        data.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${row.Provincia}</td><td>${row.Localidad}</td><td>${row["Código Postal"]}</td><td>${row.Dirección}</td>`;
-            tableBody.appendChild(tr);
-
-            provincias.add(row.Provincia);
-            localidades.add(row.Localidad);
-            codigosPostales.add(row["Código Postal"]);
-        });
-
-        populateSelect('provincia', provincias);
-        populateSelect('localidad', localidades);
-        populateSelect('codigoPostal', codigosPostales);
-    }
-
-    function populateSelect(selectId, options) {
-        const select = document.getElementById(selectId);
-        options.forEach(option => {
-            const opt = document.createElement('option');
-            opt.value = option;
-            opt.innerHTML = option;
-            select.appendChild(opt);
         });
     }
 
-    function filterTable() {
-        const provinciaFilter = document.getElementById('provincia').value;
-        const localidadFilter = document.getElementById('localidad').value;
-        const codigoPostalFilter = document.getElementById('codigoPostal').value;
-        const direccionFilter = document.getElementById('direccionSearch').value.toLowerCase();
-        const rows = document.querySelectorAll('#dataTable tbody tr');
-
-        rows.forEach(row => {
-            const cells = row.getElementsByTagName('td');
-            const provincia = cells[0].textContent;
-            const localidad = cells[1].textContent;
-            const codigoPostal = cells[2].textContent;
-            const direccion = cells[3].textContent.toLowerCase();
-
-            const provinciaMatch = provinciaFilter === '' || provincia === provinciaFilter;
-            const localidadMatch = localidadFilter === '' || localidad === localidadFilter;
-            const codigoPostalMatch = codigoPostalFilter === '' || codigoPostal === codigoPostalFilter;
-            const direccionMatch = direccion.includes(direccionFilter);
-
-            row.style.display = provinciaMatch && localidadMatch && codigoPostalMatch && direccionMatch ? '' : 'none';
+    function loadData() {
+        gapi.client.sheets.spreadsheets.values.get({
+            spreadsheetId: SHEET_ID,
+            range: 'Huella_Compacta' // Asegúrate de que el nombre sea correcto
+        }).then(response => {
+            const rows = response.result.values;
+            if (rows.length) {
+                const tableBody = document.querySelector('#dataTable tbody');
+                rows.slice(1).forEach(row => { // Omitir la cabecera
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
+                    tableBody.appendChild(tr);
+                });
+            } else {
+                console.log('No data found.');
+            }
+        }, error => {
+            console.error('Error loading data: ', error);
         });
     }
+
+    window.onload = init;
 </script>
 
 </body>
