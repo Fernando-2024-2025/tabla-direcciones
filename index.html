@@ -65,34 +65,26 @@
 </table>
 
 <script>
-    const fileUrls = [
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_1.txt',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_2.txt',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_3.txt',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_4.txt',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_5.txt',
-        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_6.txt'
-    ]; // URLs de los archivos TXT
+    const csvUrls = [
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_1.csv',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_2.csv',
+        'https://raw.githubusercontent.com/Fernando-2024-2025/tabla-direcciones/main/Huella_Compacta_3.csv',
+    ];
 
-    let allData = [];
-
-    Promise.all(fileUrls.map(url => fetch(url).then(response => response.text())))
-        .then(fileContents => {
-            fileContents.forEach(data => {
-                const rows = data.split('\n');
-                rows.forEach(row => {
-                    const cols = row.split(',');
-                    if (cols.length === 4) {
-                        allData.push(cols.map(col => col.trim()));
-                    }
+    Promise.all(csvUrls.map(url => fetch(url).then(response => response.text())))
+        .then(dataArrays => {
+            const allData = dataArrays.flatMap(data => {
+                const rows = data.split('\n').slice(1); // Omite la cabecera
+                return rows.map(row => {
+                    const [provincia, localidad, codigoPostal, direccion] = row.split(',');
+                    return { Provincia: provincia, Localidad: localidad, "Código Postal": codigoPostal, Dirección: direccion };
                 });
             });
-
             loadTable(allData.slice(0, 25)); // Mostrar solo las primeras 25 filas
         })
         .catch(error => {
             console.error(error);
-            alert('No se pudo cargar los archivos. Verifica los enlaces y los permisos.');
+            alert('No se pudo cargar los datos. Verifica el enlace y los permisos.');
         });
 
     function loadTable(data) {
@@ -103,12 +95,12 @@
 
         data.forEach(row => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${row[0]}</td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td>`;
+            tr.innerHTML = `<td>${row.Provincia}</td><td>${row.Localidad}</td><td>${row["Código Postal"]}</td><td>${row.Dirección}</td>`;
             tableBody.appendChild(tr);
 
-            provincias.add(row[0]);
-            localidades.add(row[1]);
-            codigosPostales.add(row[2]);
+            provincias.add(row.Provincia);
+            localidades.add(row.Localidad);
+            codigosPostales.add(row["Código Postal"]);
         });
 
         populateSelect('provincia', provincias);
